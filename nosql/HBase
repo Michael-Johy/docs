@@ -1,0 +1,62 @@
+HBase
+  定义：通过大量廉价的PC机器解决海量数据的高效存储和读取的分布式数据库解决方案。Hadoop Database， Google big
+       Table： Distributed storage system for structured data
+  分布式、面向列簇
+  存储：HDFS提供底层可靠的数据存储服务
+  计算：MR为HBase提供高性能的计算服务
+       ZK为HBase提供稳定的服务和failover机制
+  Key Feature：海量存储、列式存储（列，简单CRUD操作）、扩展性（RS，HDFS的datanode）、高并发（基于pc，单个IO下降并不多）、稀疏
+      针对Hbase列的灵活性，可以指定任意多的列，当列数据为空时，不占用存储空间
+  重要概念：列簇 《=3
+          rowkey： 基于单个rowkey查询；rowkey范围查询；全表扫描
+          timestamp：实现hbase多版本的关键，记录相同rowkey不同版本的数据，服务器时间保持一致，倒序，一般查询最新的
+ 
+ HBase架构：
+    Client： 包含了访问hbase的接口，cache了meta信息
+    ZK：保存了集群配置信息，meta信息；master的高可用；RS的监控（当RS异常时，回调通知master RS上下线信息）
+    Master：给RS分配R；维护集群的负载均衡；维护集群元数据信息；发现RS失效时，协调HLog的切分；当发现失效R时，分配到正常RS
+    RS：管理R；处理客户端的读写请求；负责和底层HDFS交互；负责R变大后的拆分；StoreFile的合并
+    HDFS：负责元数据信息和数据的存储；保证可靠性和高可用性
+    R：类似数据库分片或分区，负责小部分rowkey范围的数据读写服务
+      寻址方式：
+          0.96版本之前：3次寻址
+          0.96版本之后：2次寻址   缓存失效时，失败次数达到会更新缓存meta
+    
+ HBase写逻辑：写内存，log，刷盘等操作
+    1.client获取要写入的R所在的RS
+    2.请求写HLog & memStore ，都成功才成功
+    刷盘条件：1.全局内存控制：当Memstore占有内存达到%时会触发刷盘操作
+            2.MemStore大小限制。128M
+            3.Hlog数量达到上限（避免故障恢复时间长）
+            4.手动触发
+            5.RS关闭
+            6.Region使用Hlog恢复后，刷盘才能提供服务
+    Hlog简介： Hbase wal方式产生的日志信息，内部是简单的顺序日志
+              HLog：HLogKey（seqId + ts + clusterId） + WALEdit 
+              SeqID作用： 刷盘后删除Hlog文件；持久化到HFile，数据恢复时用到
+              生命周期：产生-滚动-过期-删除
+ RS的故障恢复：
+    RS启动时会在ZK建立临时节点，并定时Ping ZK，ZK更新timeout，若timeout未收到心跳，则RS挂掉。ZK通知Master故障恢复
+    RS宕机->ZK ping异常-> 通知master异常恢复->HLog切分->Region重新分配->HLog重放，完成恢复
+    
+    Log切分：
+      1.logSplitting  master进行 
+      2.Distributed logSpliting ： 多个RS同时进行
+      3.Distributed Log Replay
+ 
+ Region拆分：
+    0.94版： ConstantSize
+    0.94～2.0: IncreasingToUpperBound
+    2.0版：Stepping
+    流程：ZK /hbase/region-in-transition/region-name创建节点  2.Region状态变化，并同步到内存  3.关闭父R  4.D1 & D2 reference文件
+    
+ Region合并：
+    1.minorCompaction
+      刷盘-》StoreFile，导致生成大量小文件，3个StoreFile会合并成一个
+      本质：使用短时间IO消耗换取后续查询延迟
+    2.majorCompaction
+      将一个R下的StoreFile合并成一个StoreFile。大合并影响大，一般一周一次
+    
+ 参考：https://cloud.tencent.com/developer/article/1006043
+              
+    

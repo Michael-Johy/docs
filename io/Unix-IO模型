@@ -1,0 +1,13 @@
+Unix IO模型
+
+1.同步阻塞式IO 
+2.同步非阻塞IO
+3.IO多路复用
+4.信号驱动式IO模型
+5.异步IO模型
+
+detail: https://cloud.tencent.com/developer/article/1099484
+
+
+IO多路复用(select poll epoll)
+https://cloud.tencent.com/developer/article/1005481

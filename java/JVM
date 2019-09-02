@@ -1,0 +1,46 @@
+JVM参数最佳实践
+
+PARALLEL GC（适合对吞吐量要求高的应用）：
+-Xms1g   #堆初始大小(建议和-Xmx一致)，可自行调整
+-Xmx1g   #堆最大大小(建议和-Xms一致)，可自行调整
+-Xmn512m #Young区大小，可自行调整
+-Xss512k
+-XX:PermSize=128m
+-XX:MaxPermSize=256m
+-XX:SoftRefLRUPolicyMSPerMB=0
+-XX:+PrintGC
+-XX:+PrintGCDetails
+-XX:+PrintGCDateStamps
+
+CMS GC（适合对影响时间敏感的应用）：
+-Xms1g   #堆初始大小(建议和-Xmx一致)，可自行调整
+-Xmx1g   #堆最大大小(建议和-Xms一致)，可自行调整
+-Xmn512m #Young区大小，可自行调整
+-Xss512k
+-XX:PermSize=128m
+-XX:MaxPermSize=256m
+-XX:SoftRefLRUPolicyMSPerMB=0
+-XX:-UseAdaptiveSizePolicy
+-XX:+UseParNewGC
+-XX:+UseConcMarkSweepGC
+-XX:+UseCMSInitiatingOccupancyOnly
+-XX:CMSInitiatingOccupancyFraction=75  #当old区使用达到75%时，执行CMS收集。可以自行调整百分比
+-XX:+CMSClassUnloadingEnabled
+-XX:+CMSScavengeBeforeRemark
+-XX:+ExplicitGCInvokesConcurrent
+-XX:+PrintGC
+-XX:+PrintGCDetails
+-XX:+PrintGCDateStamps
+
+G1 GC（JDK8推荐）：
+-Xms1g  #堆初始大小(建议和-Xmx一致)，可自行调整
+-Xmx1g  #堆最大大小(建议和-Xms一致)，可自行调整
+-Xss512k
+-XX:MetaspaceSize=128m
+-XX:MaxMetaspaceSize=1g
+-XX:SoftRefLRUPolicyMSPerMB=0
+-XX:MaxGCPauseMillis=200   #期望的最大GC暂停时间，可以自行调整(单位：毫秒)
+-XX:+UseG1GC
+-XX:+PrintGC
+-XX:+PrintGCDetails
+-XX:+PrintGCDateStamps

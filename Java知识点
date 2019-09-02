@@ -1,0 +1,18 @@
+Java:
+并发
+IO模型
+网络协议(http)
+
+
+Zookeeper
+缓存
+消息中间件(kafka, rocketMQ, rabbitMQ)
+数据库(mysql)
+NoSQL(mongo, hbase, redis)
+web服务器(tomcat), Nginx
+服务框架等(spring, dubbo等)
+大数据
+
+算法
+
+CI:jenkins
